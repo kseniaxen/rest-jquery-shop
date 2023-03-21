@@ -143,22 +143,95 @@ class Product
         return false;
     }
 
-    public function delete() {
-        try{
+    public function delete()
+    {
+        try {
             $query = "DELETE FROM " . $this->table_name . " WHERE id = ?";
 
             $stmt = $this->conn->prepare($query);
-    
+
             $this->id = htmlspecialchars(strip_tags($this->id));
-    
+
             $stmt->bindParam(1, $this->id);
-    
-            if($stmt->execute()) {
+
+            if ($stmt->execute()) {
                 return true;
             }
-        } catch(PDOException $ex) {
+        } catch (PDOException $ex) {
             echo 'Ошибка! Сообщание: ' . $ex->getMessage();
         }
         return false;
+    }
+
+    public function search($keywords)
+    {
+        try {
+            $query = "SELECT 
+                        c.name as category_name, p.id, p.name, p.description, p.price, p.category_id, p.created 
+                    FROM 
+                        " . $this->table_name . " p 
+                    LEFT JOIN 
+                        categories c 
+                    ON 
+                        p.category_id = c.id 
+                    WHERE 
+                        p.name LIKE ? OR p.description LIKE ? OR c.name LIKE ? 
+                    ORDER BY 
+                        p.created DESC";
+
+            $stmt = $this->conn->prepare($query);
+
+            $keywords = htmlspecialchars(strip_tags($keywords));
+            $keywords = "%{$keywords}%";
+
+            $stmt->bindParam(1, $keywords);
+            $stmt->bindParam(2, $keywords);
+            $stmt->bindParam(3, $keywords);
+
+            $stmt->execute();
+            return $stmt;
+        } catch (PDOException $ex) {
+            echo 'Ошибка! Сообщание: ' . $ex->getMessage();
+        }
+        return null;
+    }
+
+    public function readPaging($from_record_num, $records_per_page)
+    {
+        try {
+            $query = "SELECT 
+                    c.name as category_name, p.id, p.name, p.description, p.price, p.category_id, p.created 
+                FROM 
+                " . $this->table_name . " p 
+                LEFT JOIN 
+                    categories c 
+                ON 
+                    p.category_id = c.id 
+                ORDER BY p.created DESC 
+                LIMIT ?, ?";
+
+            $stmt = $this->conn->prepare($query);
+
+            $stmt->bindParam(1, $from_record_num, PDO::PARAM_INT);
+            $stmt->bindParam(2, $records_per_page, PDO::PARAM_INT);
+
+            $stmt->execute();
+
+            return $stmt;
+        } catch (PDOException $ex) {
+            echo 'Ошибка! Сообщание: ' . $ex->getMessage();
+        }
+        return null;
+    }
+
+    public function count() {
+        $query = "SELECT COUNT(*) as total_rows FROM " . $this->table_name . "";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row["total_rows"];
     }
 }
