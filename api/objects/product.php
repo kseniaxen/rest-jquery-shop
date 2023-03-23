@@ -196,35 +196,36 @@ class Product
         return null;
     }
 
+    // получение товаров с пагинацией
     public function readPaging($from_record_num, $records_per_page)
     {
-        try {
-            $query = "SELECT 
-                    c.name as category_name, p.id, p.name, p.description, p.price, p.category_id, p.created 
-                FROM 
-                " . $this->table_name . " p 
-                LEFT JOIN 
-                    categories c 
-                ON 
-                    p.category_id = c.id 
-                ORDER BY p.created DESC 
-                LIMIT ?, ?";
+        // выборка
+        $query = "SELECT
+            c.name as category_name, p.id, p.name, p.description, p.price, p.category_id, p.created
+        FROM
+            " . $this->table_name . " p
+            LEFT JOIN
+                categories c
+                    ON p.category_id = c.id
+        ORDER BY p.created DESC
+        LIMIT ?, ?";
 
-            $stmt = $this->conn->prepare($query);
+        // подготовка запроса
+        $stmt = $this->conn->prepare($query);
 
-            $stmt->bindParam(1, $from_record_num, PDO::PARAM_INT);
-            $stmt->bindParam(2, $records_per_page, PDO::PARAM_INT);
+        // свяжем значения переменных
+        $stmt->bindParam(1, $from_record_num, PDO::PARAM_INT);
+        $stmt->bindParam(2, $records_per_page, PDO::PARAM_INT);
 
-            $stmt->execute();
+        // выполняем запрос
+        $stmt->execute();
 
-            return $stmt;
-        } catch (PDOException $ex) {
-            echo 'Ошибка! Сообщание: ' . $ex->getMessage();
-        }
-        return null;
+        // вернём значения из базы данных
+        return $stmt;
     }
 
-    public function count() {
+    public function count()
+    {
         $query = "SELECT COUNT(*) as total_rows FROM " . $this->table_name . "";
 
         $stmt = $this->conn->prepare($query);
